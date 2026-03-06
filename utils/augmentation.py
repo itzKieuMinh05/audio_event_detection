@@ -295,7 +295,7 @@ def test_augmentation():
     audio = np.sin(2 * np.pi * 440 * t)  # 440 Hz sine wave
     
     # Initialize augmentor
-    augmentor = AudioAugmentor(config_path="/home/sandbox/audio_event_detection/configs/config.yaml")
+    augmentor = AudioAugmentor(config_path="../audio_event_detection/configs/config.yaml")
     
     # Test augmentations
     aug_audio = augmentor.augment_audio(audio, sr)

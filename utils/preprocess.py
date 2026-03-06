@@ -49,6 +49,9 @@ class AudioPreprocessor:
             mapping[class_info['name']] = class_info['label']
         return mapping
     
+    """
+    Hanlde the audio signal 
+    """
     def load_audio(self, file_path: str, sr: Optional[int] = None) -> Tuple[np.ndarray, int]:
         """
         Load audio file and resample if necessary
@@ -92,6 +95,7 @@ class AudioPreprocessor:
         
         return audio
     
+    
     def remove_silence(self, audio: np.ndarray, threshold: float = 0.01) -> np.ndarray:
         """
         Remove silence from audio
@@ -133,6 +137,7 @@ class AudioPreprocessor:
             audio = audio / max_val
         
         return audio
+    
     
     def extract_mel_spectrogram(self, audio: np.ndarray, sr: int) -> np.ndarray:
         """

@@ -59,7 +59,7 @@ echo ""
 echo "Creating project directories..."
 mkdir -p data/raw/UrbanSound8K
 mkdir -p data/raw/ESC-50
-mkdir -p data/raw/FSD50K
+#mkdir -p data/raw/FSD50K
 mkdir -p data/processed/spectrograms
 mkdir -p data/augmented
 mkdir -p models/checkpoints
@@ -84,7 +84,7 @@ echo "Next steps:"
 echo "1. Download datasets:"
 echo "   - UrbanSound8K: https://www.kaggle.com/datasets/chrisfilo/urbansound8k"
 echo "   - ESC-50: https://github.com/karolpiczak/ESC-50"
-echo "   - FSD50K: https://zenodo.org/record/4060432"
+#echo "   - FSD50K: https://zenodo.org/record/4060432"
 echo ""
 echo "2. Place datasets in data/raw/ directory"
 echo ""
