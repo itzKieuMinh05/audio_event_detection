@@ -1,7 +1,3 @@
-"""
-PyTorch Dataset Module for Audio Event Detection
-"""
-
 import os
 import numpy as np
 import pandas as pd
@@ -39,7 +35,6 @@ class AudioEventDataset(Dataset):
         # Load configuration
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
-        
         self.num_classes = self.config['model']['num_classes']
         
     def __len__(self) -> int:
@@ -73,7 +68,6 @@ class AudioEventDataset(Dataset):
         # Convert to tensor
         mel_spec = torch.FloatTensor(mel_spec).unsqueeze(0)  # Add channel dimension
         label = torch.LongTensor([label])
-        
         return mel_spec, label
     
     def get_class_weights(self) -> torch.Tensor:
@@ -262,7 +256,7 @@ def test_dataset():
     # Create dataset
     dataset = AudioEventDataset(
         metadata_df,
-        config_path="/home/sandbox/audio_event_detection/configs/config.yaml",
+        config_path="configs/config.yaml",
         mode='train'
     )
     
@@ -275,6 +269,39 @@ def test_dataset():
     
     print("Dataset test complete!")
 
+def test_raw_audio_dataset():
+    print("\n--- Testing RawAudioDataset ---")
+    
+    test_audio_path = "data/raw/UrbanSound8K/audio/fold1/7061-6-0-0.wav" 
+    
+    if not os.path.exists(test_audio_path):
+        print(f"⚠️ Can't find file {test_audio_path}. Check the path!")
+        return
+
+    dummy_data = {
+        'file_path': [test_audio_path],
+        'label': [0],
+        'fold': [1]
+    }
+    metadata_df = pd.DataFrame(dummy_data)
+    
+    try:
+        dataset = RawAudioDataset(
+            metadata_df,
+            config_path="configs/config.yaml",
+            mode='train'
+        )
+        
+        mel_spec, label = dataset[0]
+        
+        print(f"Successfully!")
+        print(f"Shape of Spectrogram: {mel_spec.shape}")
+        print(f"Label: {label.item()}")
+        print(f"Max/Min Valuable in dB: {mel_spec.max():.2f} / {mel_spec.min():.2f}")
+        
+    except Exception as e:
+        print(f"Error in test RawAudioDataset: {e}")
 
 if __name__ == "__main__":
     test_dataset()
+    test_raw_audio_dataset()

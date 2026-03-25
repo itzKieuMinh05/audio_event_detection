@@ -49,9 +49,7 @@ class AudioPreprocessor:
             mapping[class_info['name']] = class_info['label']
         return mapping
     
-    """
-    Hanlde the audio signal 
-    """
+    
     def load_audio(self, file_path: str, sr: Optional[int] = None) -> Tuple[np.ndarray, int]:
         """
         Load audio file and resample if necessary
@@ -95,27 +93,19 @@ class AudioPreprocessor:
         
         return audio
     
-    
-    def remove_silence(self, audio: np.ndarray, threshold: float = 0.01) -> np.ndarray:
+    def remove_silence(self, audio: np.ndarray) -> np.ndarray:
         """
-        Remove silence from audio
-        
-        Args:
-            audio: Audio array
-            threshold: Amplitude threshold for silence
-            
-        Returns:
-            Audio with silence removed
+        Remove silence from audio using librosa's robust effects
         """
-        if not self.preprocessing_config['remove_silence']:
+        if not self.config['preprocessing'].get('remove_silence', False):
             return audio
             
-        # Simple energy-based silence removal
-        energy = librosa.feature.rms(y=audio)[0]
-        non_silent = energy > threshold
+        intervals = librosa.effects.split(audio, top_db=30)
         
-        if np.any(non_silent):
-            return audio[non_silent]
+        if len(intervals) > 0:
+            non_silent_audio = np.concatenate([audio[start:end] for start, end in intervals])
+            return non_silent_audio
+            
         return audio
     
     def normalize_audio(self, audio: np.ndarray) -> np.ndarray:
@@ -137,7 +127,6 @@ class AudioPreprocessor:
             audio = audio / max_val
         
         return audio
-    
     
     def extract_mel_spectrogram(self, audio: np.ndarray, sr: int) -> np.ndarray:
         """
@@ -239,26 +228,21 @@ class AudioPreprocessor:
         Returns:
             DataFrame with file paths and labels
         """
-        metadata_path = os.path.join(data_path, 'metadata', 'UrbanSound8K.csv')
         
+        metadata_path = os.path.join(data_path, 'metadata', 'UrbanSound8K.csv')
         if not os.path.exists(metadata_path):
             raise FileNotFoundError(f"Metadata not found at {metadata_path}")
-        
         metadata = pd.read_csv(metadata_path)
         
-        # Map UrbanSound8K classes to our target classes
+  
         us8k_to_target = {
             'gun_shot': 'gunshot',
             'siren': 'siren',
             'dog_bark': 'dog_bark',
             'glass_breaking': 'glass_breaking'
         }
-        
-        # Filter relevant classes
-        metadata = metadata[metadata['class'].isin(us8k_to_target.keys())]
-        
-        # Map to target classes
-        metadata['target_class'] = metadata['class'].map(us8k_to_target)
+
+        metadata['target_class'] = metadata['class'].map(us8k_to_target).fillna('normal')
         metadata['label'] = metadata['target_class'].map(self.class_mapping)
         
         # Create full file paths
@@ -266,7 +250,6 @@ class AudioPreprocessor:
             lambda row: os.path.join(data_path, 'audio', f"fold{row['fold']}", row['slice_file_name']),
             axis=1
         )
-        
         return metadata[['file_path', 'target_class', 'label', 'fold']]
     
     def load_esc50(self, data_path: str) -> pd.DataFrame:
@@ -280,26 +263,21 @@ class AudioPreprocessor:
             DataFrame with file paths and labels
         """
         metadata_path = os.path.join(data_path, 'meta', 'esc50.csv')
-        
+        print(metadata_path)
         if not os.path.exists(metadata_path):
             raise FileNotFoundError(f"Metadata not found at {metadata_path}")
         
         metadata = pd.read_csv(metadata_path)
-        
-        # Map ESC-50 classes to our target classes
+
         esc50_to_target = {
             'crying_baby': 'scream',
             'fireworks': 'explosion',
             'crackling_fire': 'fire_crackling'
         }
-        
-        # Filter relevant classes
-        metadata = metadata[metadata['category'].isin(esc50_to_target.keys())]
-        
-        # Map to target classes
-        metadata['target_class'] = metadata['category'].map(esc50_to_target)
+
+        metadata['target_class'] = metadata['category'].map(esc50_to_target).fillna('normal')
         metadata['label'] = metadata['target_class'].map(self.class_mapping)
-        
+
         # Create full file paths
         metadata['file_path'] = metadata.apply(
             lambda row: os.path.join(data_path, 'audio', row['filename']),
@@ -352,7 +330,6 @@ class AudioPreprocessor:
             print(f"Total samples: {len(merged_df)}")
             print("\nClass distribution:")
             print(merged_df['target_class'].value_counts())
-            
             return merged_df
         else:
             print("No datasets loaded successfully")

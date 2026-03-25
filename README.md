@@ -2108,3 +2108,9 @@ async def health():
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
+
+
+1. preprocess, augmentation, dataset...
+2. tìm models, train 
+3. demo
+4. evalue..
