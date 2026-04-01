@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 import numpy as np
 import yaml
 from tqdm import tqdm
@@ -87,6 +88,16 @@ class Trainer:
             log_dir = os.path.join(self.config['paths']['logs_dir'], 
                                   f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
             self.writer = SummaryWriter(log_dir)
+            
+        # Setup Weights & Biases (wandb)
+        self.use_wandb = self.config['logging'].get('wandb', {}).get('enabled', False)
+        if self.use_wandb:
+            wandb_project = self.config['logging']['wandb'].get('project', 'audio-event-detection')
+            wandb.init(
+                project=wandb_project,
+                config=self.config,
+                name=f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
         
         # Mixed precision training
         self.use_amp = self.training_config.get('mixed_precision', False)
@@ -358,6 +369,17 @@ class Trainer:
                 self.writer.add_scalar('Train/F1', train_metrics['f1_score'], epoch)
                 self.writer.add_scalar('Val/Loss', val_metrics['loss'], epoch)
                 self.writer.add_scalar('Val/F1', val_metrics['f1_score'], epoch)
+                
+            # WandB logging
+            if getattr(self, 'use_wandb', False):
+                wandb.log({
+                    'epoch': epoch + 1,
+                    'Learning_Rate': current_lr,
+                    'Train/Loss': train_metrics['loss'],
+                    'Train/F1': train_metrics['f1_score'],
+                    'Val/Loss': val_metrics['loss'],
+                    'Val/F1': val_metrics['f1_score']
+                })
             
             # Save checkpoint
             is_best = val_metrics['f1_score'] > self.best_val_f1
@@ -386,6 +408,9 @@ class Trainer:
         
         if self.writer:
             self.writer.close()
+            
+        if getattr(self, 'use_wandb', False):
+            wandb.finish()
 
 
 def main():

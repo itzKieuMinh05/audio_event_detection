@@ -94,15 +94,17 @@ class MultiHeadAttention(nn.Module):
         
         self.dropout = nn.Dropout(dropout)
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, return_attention: bool = False):
         """
         Forward pass
         
         Args:
             x: Input tensor (batch, seq_len, embed_dim)
+            return_attention: Whether to return attention weights
             
         Returns:
             Attention output (batch, seq_len, embed_dim)
+            (Optional) Attention weights (batch, num_heads, seq_len, seq_len)
         """
         B, N, C = x.shape
         
@@ -113,6 +115,7 @@ class MultiHeadAttention(nn.Module):
         # Attention scores
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
+        attn_weights = attn  # Keep original weights before dropout for visualization
         attn = self.dropout(attn)
         
         # Apply attention to values
@@ -120,6 +123,8 @@ class MultiHeadAttention(nn.Module):
         x = self.proj(x)
         x = self.dropout(x)
         
+        if return_attention:
+            return x, attn_weights
         return x
 
 
@@ -379,9 +384,9 @@ class AudioSpectrogramTransformer(nn.Module):
         x = self.pos_drop(x)
         
         for block in self.blocks:
-            # Extract attention weights
-            attn_output = block.attn(block.norm1(x))
-            attention_maps.append(attn_output)
+            # Extract attention weights properly
+            attn_output, attn_weights = block.attn(block.norm1(x), return_attention=True)
+            attention_maps.append(attn_weights)  # Append real attention weights
             x = x + attn_output
             x = x + block.mlp(block.norm2(x))
         
@@ -398,7 +403,7 @@ def test_model():
     print("Testing Audio Spectrogram Transformer...")
     
     # Create model
-    model = AudioSpectrogramTransformer(config_path="/home/sandbox/audio_event_detection/configs/config.yaml")
+    model = AudioSpectrogramTransformer(config_path="h:/audio_event_detection/configs/config.yaml")
     
     # Print model info
     print(f"Number of parameters: {count_parameters(model):,}")
