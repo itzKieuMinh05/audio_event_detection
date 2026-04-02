@@ -48,9 +48,9 @@ class MetricsCalculator:
         
         # Basic metrics
         metrics['accuracy'] = accuracy_score(y_true, y_pred)
-        metrics['precision'] = precision_score(y_true, y_pred, average='weighted', zero_division=0)
-        metrics['recall'] = recall_score(y_true, y_pred, average='weighted', zero_division=0)
-        metrics['f1_score'] = f1_score(y_true, y_pred, average='weighted', zero_division=0)
+        metrics['precision'] = precision_score(y_true, y_pred, average='macro', zero_division=0)
+        metrics['recall'] = recall_score(y_true, y_pred, average='macro', zero_division=0)
+        metrics['f1_score'] = f1_score(y_true, y_pred, average='macro', zero_division=0)
         
         # Per-class metrics
         precision_per_class = precision_score(y_true, y_pred, average=None, zero_division=0)
@@ -70,14 +70,15 @@ class MetricsCalculator:
                 metrics['roc_auc'] = roc_auc_score(
                     y_true, y_prob, 
                     multi_class='ovr', 
-                    average='weighted'
+                    average='macro',
+                    labels=np.arange(self.num_classes)
                 )
                 
                 # Mean Average Precision
                 metrics['map'] = average_precision_score(
                     self._to_one_hot(y_true),
                     y_prob,
-                    average='weighted'
+                    average='macro'
                 )
             except Exception as e:
                 print(f"Warning: Could not calculate advanced metrics: {e}")
