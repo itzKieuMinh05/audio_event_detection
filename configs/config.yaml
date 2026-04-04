@@ -19,7 +19,7 @@ datasets:
     sample_rate: 22050
     
   esc50:
-    path: "data/raw/ESC-50/ESC-50-master"
+    path: "data/raw/ESC-50"
     url: "https://github.com/karolpiczak/ESC-50"
     classes:
       - crying_baby  # for scream detection
